@@ -41,7 +41,10 @@ class YamlToJsonTransformer(ResourceTransformer):
 
 class FileSystemObject:
     @staticmethod
-    def save(payload, location):
+    def save(payload, location, mkdirs=False):
+        if mkdirs:
+            os.makedirs(Path(location).resolve().parent, exist_ok=True)
+
         with open(
             location,
             f"w{'b' if isinstance(payload, bytes) else '' if Path(location).exists() else '+'}",
@@ -98,7 +101,11 @@ class UnifiedSimpleScientificResource:
             return self.transform(content_type).save(location_type=location_type)
 
         if location_type == "fs":
-            FileSystemObject.save(self.payload, self.location + f".{self.content_type}")
+            FileSystemObject.save(
+                self.payload,
+                Path(self.location).resolve() / f"{self.name}.{self.content_type}",
+                mkdirs=True,
+            )
         elif location_type == "mem" or location_type == "url":
             log.warn("Cannot save a Resource to %s.", location_type)
 
@@ -107,7 +114,7 @@ class UnifiedSimpleScientificResource:
     def load(self):
         if self.location_type == "fs":
             self.payload = FileSystemObject.load(
-                self.location + f".{self.content_type}"
+                Path(self.location).resolve() / f"{self.name}.{self.content_type}"
             )
         elif self.location_type == "url":
             self.payload = UrlObject.load(self.location)
@@ -118,36 +125,3 @@ class UnifiedSimpleScientificResource:
 
 
 USSR = UnifiedSimpleScientificResource
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-
-    # Create a resource with JSON content
-    json_payload = json.dumps({"key": "value", "age": 30}).encode()
-    resource = USSR(
-        name="my_resource",
-        location="example",
-        location_type="fs",
-        content_type="json",
-        payload=json_payload,
-    )
-
-    # Register transformers
-    resource.register_transformer(JsonToYamlTransformer())
-    resource.register_transformer(YamlToJsonTransformer())
-
-    # Save the resource as YAML
-    print(resource.save(content_type="yaml"))
-    assert os.path.exists("example.yaml")
-
-    resource.save()
-    assert os.path.exists("example.json")
-
-    # remove the files
-    os.remove("example.yaml")
-    os.remove("example.json")
-
-
-if __name__ == "__main__":
-    main()

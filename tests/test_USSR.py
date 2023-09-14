@@ -21,11 +21,13 @@ def test_USSR_basic_transform():
 
     # Save the resource as YAML
     print(resource.save(content_type="yaml"))
-    assert os.path.exists("example.yaml")
+    assert os.path.exists("example/my_resource.yaml")
 
-    resource.save()
-    assert os.path.exists("example.json")
+    # Save the resource as JSON
+    print(resource.save(content_type="json"))
+    assert os.path.exists("example/my_resource.json")
 
     # remove the files
-    os.remove("example.yaml")
-    os.remove("example.json")
+    os.remove("example/my_resource.yaml")
+    os.remove("example/my_resource.json")
+    os.rmdir("example")
