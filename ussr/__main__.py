@@ -2,13 +2,16 @@ import json
 import os
 import logging
 
-from ussr import USSR, JsonToYamlTransformer, YamlToJsonTransformer
+from ussr import USSR, JsonToYamlTransformer, YamlToJsonTransformer, ResourceManager
 
 log = logging.getLogger(__name__)
 
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
+
+    #
+    RM = ResourceManager()
 
     # Create a resource with JSON content
     json_payload = json.dumps({"key": "value", "age": 30}).encode()
@@ -21,21 +24,14 @@ def main():
     )
 
     # Register transformers
-    resource.register_transformer(JsonToYamlTransformer())
-    resource.register_transformer(YamlToJsonTransformer())
+    RM.register_transformer(JsonToYamlTransformer(), "yaml")
+    RM.register_transformer(YamlToJsonTransformer(), "json")
 
     # Save the resource as YAML
-    print(resource.save(content_type="yaml"))
+    RM.transform(resource, "yaml")
+    RM.save(resource)
+
     assert os.path.exists("my_resource.yaml")
-
-    # # Save the resource as JSON
-    # print(resource.save(content_type="json"))
-    # assert os.path.exists("example/my_resource.json")
-
-    # # remove the files
-    # os.remove("example/my_resource.yaml")
-    # os.remove("example/my_resource.json")
-    # os.rmdir("example")
 
 
 if __name__ == "__main__":
