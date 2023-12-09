@@ -2,7 +2,7 @@ import json
 import os
 import logging
 
-from ussr import USSR, JsonToYamlTransformer, YamlToJsonTransformer, ResourceManager
+from ussr import *
 
 log = logging.getLogger(__name__)
 
@@ -26,12 +26,30 @@ def main():
     # Register transformers
     RM.register_transformer(JsonToYamlTransformer(), "yaml")
     RM.register_transformer(YamlToJsonTransformer(), "json")
+    yaml_zip = YamlToJsonTransformer() >> CompressionTransformer()
+    RM.register_transformer(yaml_zip, "zlib.bin")
 
     # Save the resource as YAML
     RM.transform(resource, "yaml")
     RM.save(resource)
 
-    assert os.path.exists("my_resource.yaml")
+    # CLone then transform
+    resource2 = RM.clone(resource)
+    RM.transform(resource2, "json")
+    # RM.save(resource2)
+    RM.transform(resource2, "zlib.bin")
+    RM.save(resource2)
+
+    # assert os.path.exists("my_resource.yaml")
+    # assert os.path.exists("my_resource.yml.zip")
+
+    # decompress and load
+    r3 = RM.clone(resource2)
+    r3.payload = ""
+    print(r3)
+    RM.load(r3)
+    print(r3)
+    RM.transform(r3, "zlib.bin", mode="decompress")
 
 
 if __name__ == "__main__":
