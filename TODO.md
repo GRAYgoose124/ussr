@@ -1,0 +1,1 @@
+- [ ] fix extension usage to not depend on them

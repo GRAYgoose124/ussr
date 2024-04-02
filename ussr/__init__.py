@@ -8,12 +8,15 @@ from .transform import (
     CompressionTransformer,
     CsvToJsonTransformer,
     CompressionTransformer,
+    BytesToMimeMessageTransformer,
+    StrToBytesTransformer,
 )
 from .handlers import (
     ResourceHandler,
     ResourceHandlerFactory,
     FileSystemHandler,
     UrlHandler,
+    MemoryHandler,
 )
 
 base = [
@@ -32,6 +35,8 @@ transformers = [
     # More generic helpers:
     "CompressionTransformer",
     "ComposedTransformer",
+    "BytesToMimeMessageTransformer",
+    "StrToBytesTransformer",
 ]
 handlers = [
     "FileSystemHandler",

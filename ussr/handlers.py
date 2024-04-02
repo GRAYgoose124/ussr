@@ -9,29 +9,36 @@ log = logging.getLogger(__name__)
 
 class ResourceHandler(ABC):
     @abstractmethod
-    def save(self, resource, location):
+    def save(self, resource):
         pass
 
     @abstractmethod
-    def load(self, location):
+    def load(self, resource):
         pass
 
 
 class FileSystemHandler(ResourceHandler):
-    def save(self, resource, location):
+    def save(self, resource):
         try:
-            os.makedirs(Path(location).parent, exist_ok=True)
+            os.makedirs(Path(resource.location).parent, exist_ok=True)
+
             with open(
-                location, "wb" if isinstance(resource.payload, bytes) else "w"
+                Path(resource.location).resolve()
+                / f"{resource.name}.{resource.extension}",
+                "wb" if isinstance(resource.payload, bytes) else "w",
             ) as f:
                 f.write(resource.payload)
         except Exception as e:
             log.error(f"Error saving file: {e}")
             raise
 
-    def load(self, location):
+    def load(self, resource):
         try:
-            with open(location, "rb") as f:
+            with open(
+                Path(resource.location).resolve()
+                / f"{resource.name}.{resource.extension}",
+                "rb",
+            ) as f:
                 return f.read()
         except Exception as e:
             log.error(f"Error loading file: {e}")
@@ -39,9 +46,9 @@ class FileSystemHandler(ResourceHandler):
 
 
 class UrlHandler(ResourceHandler):
-    def load(self, location):
+    def load(self, resource):
         try:
-            response = requests.get(location)
+            response = requests.get(resource.location)
             response.raise_for_status()
             return response.content
         except Exception as e:
@@ -49,10 +56,19 @@ class UrlHandler(ResourceHandler):
             raise
 
 
+class MemoryHandler(ResourceHandler):
+    def save(self, resource):
+        return resource.clone()
+
+    def load(self, resource):
+        return resource.payload
+
+
 class ResourceHandlerFactory:
     handlers: dict[str, Type[ResourceHandler]] = {
         "fs": FileSystemHandler,
         "url": UrlHandler,
+        "mem": MemoryHandler,
     }
 
     def add_handler(self, location_type: str, handler: Type[ResourceHandler]):
